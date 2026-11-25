@@ -171,6 +171,38 @@
   table.sk input:disabled{background:var(--card2);color:var(--muted);border-color:var(--line)}
   .hint{color:var(--muted)}
   .stage{border-color:var(--line)}
+
+  /* ============ 手机窄屏 ============ */
+  @media (max-width:760px){
+    header{padding:12px 12px 8px}
+    header h1{font-size:16px;letter-spacing:1px;padding-right:66px}
+    header p{font-size:11px;line-height:1.5}
+    .themeBtn{right:10px;top:10px;padding:4px 10px;font-size:11px}
+    nav{padding:8px 10px 0;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    nav button{padding:6px 12px;font-size:13px;flex:0 0 auto}
+    main{padding:0 10px 36px}
+    section{padding:12px;border-radius:0 0 10px 10px}
+    .panel{padding:10px;margin-bottom:12px}
+    .panel h3{font-size:13px}
+    .row{gap:8px;margin-bottom:10px}
+    /* 技能分配那条：原来不换行，会把后面的提示挤到框外 */
+    .bal{flex-wrap:wrap;gap:8px 14px;padding:8px 10px;font-size:12px}
+    .bal label{gap:4px}
+    .bal .hint{flex:1 0 100%;font-size:11px}
+    .attrs{grid-template-columns:repeat(2,1fr)}
+    .derived{grid-template-columns:repeat(2,1fr)}
+    .cols2{grid-template-columns:1fr}
+    input,select,textarea{font-size:16px}      /* 小于 16px 安卓一聚焦就放大 */
+    input[type=number]{width:74px}
+    button.btn,button.ghost{padding:8px 14px;font-size:14px}
+    .big{font-size:32px;line-height:44px;min-height:44px}
+    .stage{height:186px}
+    table.sk{font-size:12px}
+    table.sk th,table.sk td{padding:4px 3px}
+    table.sk td.num,table.sk td.tot{width:auto}
+    table.sk input{width:50px;padding:2px;font-size:16px;text-align:center}
+    .hint{font-size:11px;line-height:1.55}
+  }
 </style>
 </head>
 <body>
