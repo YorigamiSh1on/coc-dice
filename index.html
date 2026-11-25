@@ -179,7 +179,7 @@
     header p{font-size:11px;line-height:1.5}
     .themeBtn{right:10px;top:10px;padding:4px 10px;font-size:11px}
     nav{padding:8px 10px 0;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-    nav button{padding:6px 12px;font-size:13px;flex:0 0 auto}
+    nav button{padding:6px 12px;font-size:13px;flex:0 0 auto;white-space:nowrap}
     main{padding:0 10px 36px}
     section{padding:12px;border-radius:0 0 10px 10px}
     .panel{padding:10px;margin-bottom:12px}
@@ -1536,6 +1536,9 @@ if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
   refreshPlaySel();
   refreshCardLibSel();
   applyTheme(document.documentElement.getAttribute('data-theme')||'light');
+  /* 支持 #card / #play / #reward / #dice 直接打开某一页，收藏夹和手机分享都能用 */
+  var h=(location.hash||'').replace('#','');
+  if(['dice','card','play','reward'].indexOf(h)>=0) switchTab(h);
 })();
 </script>
 </body>
