@@ -1,6 +1,6 @@
 /* COC 骰子台 · 离线缓存
    改了 index.html 就把下面的版本号 +1，手机上再打开一次才会换新。 */
-const CACHE = 'coc-toolkit-v2';
+const CACHE = 'coc-toolkit-v3';
 const ASSETS = [
   './index.html',
   './manifest.webmanifest',

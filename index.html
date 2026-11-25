@@ -629,7 +629,7 @@ function doCheck(){
   rollD100(pick,function(){
     rolling=false;
     big.textContent=pick;
-    v.textContent=r.k+'（目标 '+skill+'）'+(dice.length>1?'  骰：'+dice.join(' / '):'');
+    v.textContent=r.k+'（目标 '+skill+(pick>skill?'，差 '+(pick-skill)+' 点':'')+'）'+(dice.length>1?'  骰：'+dice.join(' / '):'');
     v.style.color=r.c;
     addLog('检定 目标'+skill+' → '+pick+' '+r.k+(dice.length>1?' ['+dice.join('/')+']':''));
     sClack();
@@ -653,7 +653,7 @@ function doOpposed(){
   actx();
   document.getElementById('oppRoll').textContent=ra+'  vs  '+rb;
   var v=document.getElementById('oppVerdict');
-  v.textContent=res+'　（我方 '+ka.k+' '+a+'｜对方 '+kb.k+' '+b+'）';
+  v.textContent=res+'　（我方 '+ka.k+' '+a+(ra>a?'，差 '+(ra-a)+' 点':'')+'｜对方 '+kb.k+' '+b+(rb>b?'，差 '+(rb-b)+' 点':'')+'）';
   v.style.color=col;
   addLog('对抗 我方'+a+'→'+ra+' '+ka.k+' ｜ 对方'+b+'→'+rb+' '+kb.k+' → '+res);
   sClack();
