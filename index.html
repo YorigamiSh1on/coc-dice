@@ -1,0 +1,1510 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1a30">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>COC 骰子 · 角色卡</title>
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('coc-theme')||'light')}catch(e){}</script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#efece4;color:#22201c;font-family:"Microsoft YaHei UI","Microsoft YaHei",sans-serif;font-size:14px}
+  header{padding:14px 18px 10px;background:#22201c;color:#f3efe4}
+  header h1{margin:0;font-size:18px;letter-spacing:2px}
+  header p{margin:4px 0 0;font-size:12px;color:#a8a293}
+  nav{display:flex;gap:8px;padding:10px 18px 0}
+  nav button{border:1px solid #b9b2a2;background:#fffdf7;padding:7px 16px;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px}
+  nav button.on{background:#fff;border-bottom-color:#fff;font-weight:600}
+  main{padding:0 18px 40px}
+  section{display:none;background:#fff;border:1px solid #cfc8b8;border-radius:0 8px 8px 8px;padding:16px}
+  section.on{display:block}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+  label{font-size:13px;color:#555}
+  input,select,textarea{font-family:inherit;font-size:14px;border:1px solid #c6bfae;border-radius:6px;padding:5px 8px;background:#fffdf9}
+  input[type=number]{width:80px}
+  button.btn{border:1px solid #3a5a4a;background:#3a5a4a;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:14px}
+  button.btn:hover{background:#2c4739}
+  button.ghost{border:1px solid #b9b2a2;background:#fffdf7;color:#333;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+  .big{font-size:38px;font-weight:700;letter-spacing:2px;color:#1f6b4e;min-height:50px;line-height:50px}
+  .verdict{font-size:15px;color:#8a4b12;min-height:22px}
+  .panel{border:1px solid #ddd6c6;border-radius:8px;padding:12px;margin-bottom:14px}
+  .panel h3{margin:0 0 10px;font-size:14px;letter-spacing:1px;color:#3a5a4a}
+  #history{list-style:none;margin:0;padding:0;max-height:220px;overflow:auto;font-size:13px;line-height:1.7}
+  #history li{border-bottom:1px dotted #ddd;padding:1px 0}
+  .attrs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .attr{border:1px solid #ddd6c6;border-radius:8px;padding:7px 9px;background:#fffdf7}
+  .attr .n{font-size:12px;color:#7d7566}
+  .attr .v{font-size:20px;font-weight:700;color:#22201c}
+  .attr button{margin-top:4px;font-size:11px;padding:2px 6px;border-radius:5px;border:1px solid #c6bfae;background:#fff;cursor:pointer}
+  .derived{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .dbox{background:#eef3ef;border-radius:8px;padding:7px 9px}
+  .dbox .n{font-size:12px;color:#6b7a70}
+  .dbox .v{font-size:18px;font-weight:700;color:#1f6b4e}
+  table.sk{width:100%;border-collapse:collapse;font-size:13px}
+  table.sk th{background:#f2efe6;font-weight:600;padding:5px 6px;border-bottom:1px solid #ddd6c6;text-align:left}
+  table.sk td{padding:3px 6px;border-bottom:1px dotted #e4dfd2}
+  table.sk td.num{text-align:center;width:70px}
+  table.sk input{width:62px;padding:2px 4px;font-size:13px;text-align:center}
+  table.sk td.tot{font-weight:700;color:#1f6b4e;text-align:center;width:60px}
+  .cat{background:#faf8f2;font-weight:600;color:#3a5a4a;padding:6px}
+  .bal{position:sticky;top:0;background:#fff8e6;border:1px solid #e6d9a8;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:13px;display:flex;gap:22px;z-index:5}
+  .over{color:#b03030;font-weight:700}
+  .jobtag{font-size:10px;color:#1f6b4e;border:1px solid #bcd9c9;border-radius:6px;padding:0 4px;margin-left:4px}
+  table.sk input:disabled{background:#f2efe8;color:#c3beb3;border-color:#e8e4db;cursor:not-allowed}
+  table.sk td.tot.over{color:#b03030}
+  .bal label{display:flex;align-items:center;gap:6px}
+  .bal select{padding:3px 6px;border:1px solid #c9c3b4;border-radius:6px;background:#fff;font-size:13px}
+  .hint{font-size:12px;color:#8b8377;line-height:1.6}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  textarea{width:100%;min-height:52px;resize:vertical}
+  /* ---------- 3D 骰子舞台 ---------- */
+  .stage{position:relative;height:212px;margin:0 0 16px;border-radius:10px;overflow:hidden;
+    border:1px solid #101009;perspective:820px;
+    background:radial-gradient(ellipse at 50% 72%,#4a4741 0%,#262420 52%,#131210 100%)}
+  .stage .spot{position:absolute;left:50%;top:50%;width:340px;height:340px;margin:-170px 0 0 -170px;
+    border-radius:50%;background:radial-gradient(circle,#ffffff18,#ffffff00 68%);pointer-events:none}
+  .stage .shadow{position:absolute;left:50%;bottom:34px;width:200px;height:18px;margin-left:-100px;
+    border-radius:50%;background:#00000088;filter:blur(7px);pointer-events:none}
+  .dice{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    display:flex;gap:38px;align-items:center;justify-content:center;transform-style:preserve-3d}
+  .cube{position:relative;width:88px;height:88px;transform-style:preserve-3d;
+    transform:rotateX(-15deg) rotateY(20deg);will-change:transform}
+  .cube .face{position:absolute;left:0;top:0;width:88px;height:88px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(148deg,#fdfaef 0%,#e6dfcc 58%,#cfc6ae 100%);
+    border:1px solid #b6ac95;box-shadow:inset 0 0 16px #0000001f,0 0 0 0 #0000}
+  .cube.tens .face{background:linear-gradient(148deg,#f2ecdb 0%,#d9d0b9 58%,#bdb39c 100%)}
+  .cube .lbl{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:46px;
+    color:#241f19;line-height:1;font-variant-numeric:tabular-nums}
+  .cube .pips{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+    width:66px;height:66px}
+  .cube .pips i{width:13px;height:13px;border-radius:50%;background:#241f19;justify-self:center;align-self:center}
+  .cube .pips i.off{background:transparent}
+  .f-front {transform:translateZ(44px)}
+  .f-back  {transform:rotateY(180deg) translateZ(44px)}
+  .f-right {transform:rotateY(90deg) translateZ(44px)}
+  .f-left  {transform:rotateY(-90deg) translateZ(44px)}
+  .f-top   {transform:rotateX(90deg) translateZ(44px)}
+  .f-bottom{transform:rotateX(-90deg) translateZ(44px)}
+  .stage .sfx{position:absolute;right:10px;top:9px;background:#2e2c28;color:#d9d3c4;
+    border:1px solid #4d4a43;font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;z-index:4}
+  .stage .sfx:hover{background:#3b3833}
+  .stage .cap{position:absolute;left:12px;top:10px;font-size:11px;letter-spacing:2px;color:#7a756a;
+    display:flex;align-items:center;gap:9px}
+  .dot{font-size:11px;letter-spacing:0;padding:2px 8px;border-radius:10px;border:1px solid #4d4a43;
+    display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+  .dot::before{content:"";width:6px;height:6px;border-radius:50%;background:#777}
+  .dot.on{color:#8fd6a8;border-color:#3f6b50}
+  .dot.on::before{background:#5ddc8e;box-shadow:0 0 6px #5ddc8e}
+  .dot.off{color:#9a948a}
+  .dot.off::before{background:#8a5a5a}
+
+  /* ============ 皮肤：大肥鱼 · 深海蓝 ============ */
+  :root{
+    --bg1:#e4edff; --bg2:#f6f9ff;
+    --fg:#1a2334; --muted:#6b7891; --line:#d3ddf2; --card:#ffffff; --card2:#f3f7ff;
+    --head:#14213c; --headfg:#e9f0ff;
+    --accent:#3d5afe; --accentSoft:#e7edff; --accentInk:#1e3fa6; --btnfg:#ffffff;
+    --decorA:0.06;
+  }
+  html[data-theme="dark"]{
+    --bg1:#0a1224; --bg2:#0d1526;
+    --fg:#dae5f8; --muted:#8b9bb8; --line:#233450; --card:#131d31; --card2:#18233a;
+    --head:#080e1c; --headfg:#dae5f8;
+    --accent:#7d9bff; --accentSoft:#1a2643; --accentInk:#a8bdff; --btnfg:#0a1220;
+    --decorA:0.085;
+  }
+  body{
+    background-color:var(--bg2);
+    background-image:
+      radial-gradient(1100px 640px at 8% -10%,var(--bg1) 0%,transparent 62%),
+      radial-gradient(900px 560px at 96% 112%,var(--bg1) 0%,transparent 58%);
+    background-attachment:fixed;
+    color:var(--fg);
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    opacity:var(--decorA);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cg fill='none' stroke='%233d5afe' stroke-width='1.1' stroke-linecap='round'%3E%3Cpath d='M22 168c16-30 38-44 58-41s30 20 26 35-22 24-35 17-8-24 6-28'/%3E%3Cpath d='M204 62c-20 8-32 25-29 42s15 26 28 23'/%3E%3Cpath d='M120 226c-10-14-8-30 4-37'/%3E%3Cellipse cx='178' cy='176' rx='18' ry='9'/%3E%3Ccircle cx='178' cy='176' r='3.6'/%3E%3Cellipse cx='58' cy='58' rx='12' ry='6.5'/%3E%3Ccircle cx='58' cy='58' r='2.4'/%3E%3C/g%3E%3C/svg%3E");
+    background-size:340px 340px;
+  }
+  header,nav,main{position:relative;z-index:1}
+  header{background:var(--head);color:var(--headfg)}
+  header h1{letter-spacing:3px}
+  header p{color:var(--muted)}
+  .themeBtn{position:absolute;right:16px;top:13px;z-index:2;
+    border:1px solid #ffffff33;background:#ffffff14;color:var(--headfg);
+    font-family:inherit;font-size:12px;padding:5px 13px;border-radius:999px;cursor:pointer}
+  .themeBtn:hover{background:#ffffff26}
+  nav button{border-color:var(--line);background:var(--card2);color:var(--fg)}
+  nav button.on{background:var(--card);border-bottom-color:var(--card);color:var(--accent);font-weight:700}
+  section{background:var(--card);border-color:var(--line)}
+  label{color:var(--muted)}
+  input,select,textarea{background:var(--card2);border-color:var(--line);color:var(--fg)}
+  button.btn{background:var(--accent);border-color:var(--accent);color:var(--btnfg)}
+  button.btn:hover{background:var(--accent);filter:brightness(.9)}
+  button.ghost{background:var(--card2);border-color:var(--line);color:var(--fg)}
+  button.ghost:hover{border-color:var(--accent)}
+  .big{color:var(--accent)}
+  .verdict{color:var(--accentInk)}
+  .panel{border-color:var(--line)}
+  .panel h3{color:var(--accent)}
+  #history li{border-bottom-color:var(--line)}
+  .attr{border-color:var(--line);background:var(--card2)}
+  .attr .n{color:var(--muted)}
+  .attr .v{color:var(--fg)}
+  .attr button{background:var(--card);border-color:var(--line);color:var(--fg)}
+  .dbox{background:var(--accentSoft)}
+  .dbox .n{color:var(--muted)}
+  .dbox .v{color:var(--accentInk)}
+  table.sk th{background:var(--card2);border-bottom-color:var(--line);color:var(--fg)}
+  table.sk td{border-bottom-color:var(--line)}
+  table.sk td.tot{color:var(--accentInk)}
+  table.sk td.tot.over,.over{color:#e2636b}
+  .cat{background:var(--accentSoft);color:var(--accent)}
+  .bal{background:var(--card2);border-color:var(--line)}
+  .bal select{background:var(--card);border-color:var(--line);color:var(--fg)}
+  .jobtag{color:var(--accent);border-color:var(--line)}
+  table.sk input:disabled{background:var(--card2);color:var(--muted);border-color:var(--line)}
+  .hint{color:var(--muted)}
+  .stage{border-color:var(--line)}
+</style>
+</head>
+<body>
+<header>
+  <h1>克苏鲁的呼唤 · 骰子与角色卡</h1>
+  <p>不用联网，数据只存在这台电脑的浏览器里</p>
+  <button id="themeBtn" class="themeBtn" onclick="toggleTheme()">深色</button>
+</header>
+<nav>
+  <button id="tabBtnDice" class="on" onclick="switchTab('dice')">骰子</button>
+  <button id="tabBtnCard" onclick="switchTab('card')">建角色卡</button>
+  <button id="tabBtnPlay" onclick="switchTab('play')">局内状态</button>
+  <button id="tabBtnReward" onclick="switchTab('reward')">结算 / 奖励</button>
+</nav>
+<main>
+
+<!-- ============ 骰子 ============ -->
+<section id="tab-dice" class="on">
+  <div class="stage" id="stage">
+    <div class="spot"></div>
+    <div class="shadow"></div>
+    <div class="cap">DICE TRAY <span id="bridgeDot" class="dot off">桥没开</span></div>
+    <div class="dice" id="diceBox">
+      <div class="cube tens" id="cb0"></div>
+      <div class="cube" id="cb1"></div>
+    </div>
+    <button class="sfx" id="sfxBtn" onclick="toggleSfx()">音效 开</button>
+  </div>
+  <div class="panel">
+    <h3>技能 / 属性检定</h3>
+    <div class="row">
+      <label>目标值 <input type="number" id="checkTarget" value="50" min="1" max="999"></label>
+      <button class="btn" onclick="doCheck()">掷 1d100</button>
+      <label>奖励骰 <input type="number" id="bonus" value="0" min="-2" max="2" style="width:60px"></label>
+    </div>
+    <div class="big" id="checkRoll">—</div>
+    <div class="verdict" id="checkVerdict"></div>
+     <div id="rankHint" style="color:#7a8a80;font-size:12px;margin-top:4px"></div>
+  </div>
+
+  <div class="panel">
+    <h3>对抗检定（一边 vs 另一边）</h3>
+    <div class="row">
+      <label>我方 <input type="number" id="oppA" value="70" min="1" max="999" style="width:80px"></label>
+      <label>对方 <input type="number" id="oppB" value="50" min="1" max="999" style="width:80px"></label>
+      <button class="btn" onclick="doOpposed()">对抗</button>
+    </div>
+    <div class="big" id="oppRoll">—</div>
+    <div class="verdict" id="oppVerdict"></div>
+  </div>
+
+  <div class="panel">
+    <h3>理智检定（SAN Check）</h3>
+    <div class="row">
+      <label>当前理智 <input type="number" id="sanCur" value="50" min="0"></label>
+      <label>成功损失 <input type="number" id="sanWin" value="0" min="0"></label>
+      <label>失败损失 <input type="number" id="sanLose" value="6" min="0"></label>
+      <button class="btn" onclick="doSan()">掷</button>
+    </div>
+    <div class="big" id="sanRoll">—</div>
+    <div class="verdict" id="sanVerdict"></div>
+  </div>
+
+  <div class="panel">
+    <h3>随手掷</h3>
+    <div class="row">
+      <label><input type="number" id="dn" value="1" min="1" max="50" style="width:60px"> 颗</label>
+      <label><select id="dside"><option>4</option><option>6</option><option>8</option><option selected>10</option><option>12</option><option>20</option><option>100</option></select> 面骰</label>
+      <label>加值 <input type="number" id="dplus" value="0" style="width:60px"></label>
+      <button class="btn" onclick="doFree()">掷</button>
+    </div>
+    <div class="big" id="freeRoll">—</div>
+  </div>
+
+  <div class="panel">
+    <h3>记录</h3>
+    <div class="row">
+      <button class="ghost" onclick="copyLog()">复制全部记录</button>
+      <button class="ghost" onclick="exportLog()">导出记录 txt</button>
+      <button class="ghost" onclick="clearLog()">清空</button>
+      <span class="hint">复制之后粘给 KP（也就是我）就行</span>
+    </div>
+    <ul id="history"></ul>
+  </div>
+</section>
+
+<!-- ============ 角色卡 ============ -->
+<section id="tab-card">
+  <div class="panel">
+    <h3>基本信息</h3>
+    <div class="row">
+      <label>姓名 <input id="i_name" style="width:140px"></label>
+      <label>年龄 <input id="i_age" type="number" value="20" style="width:70px"></label>
+      <label>性别 <input id="i_sex" style="width:70px"></label>
+      <label>职业 <input id="i_job" value="大学生" style="width:130px"></label>
+      <label>居住地 <input id="i_home" style="width:130px"></label>
+      <label>时代 <input id="i_era" value="1920s" style="width:80px"></label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>属性</h3>
+    <div class="row">
+      <button class="btn" onclick="rollAll()">全部掷一遍</button>
+      <span class="hint">力量·体质·敏捷·外貌·意志＝3d6×5｜体型·智力·教育＝(2d6+6)×5｜幸运＝3d6×5</span>
+    </div>
+    <div class="attrs" id="attrBox"></div>
+  </div>
+
+  <div class="panel">
+    <h3>自动算出来的</h3>
+    <div class="derived" id="derivedBox"></div>
+  </div>
+
+  <div class="panel">
+    <h3>技能分配</h3>
+    <div class="bal">
+      <label>职业 <select id="jobSel" onchange="setJob(this.value)"></select></label>
+      <label id="socialWrap" style="display:none">社交 <select id="socialSel" onchange="setSocial(this.value)"></select></label>
+      <label id="freeWrap" style="display:none">自选 <select id="freeSel" onchange="setFree(this.value)"></select></label>
+      <span>职业点 剩 <b id="occLeft">0</b></span>
+      <span>兴趣点 剩 <b id="intLeft">0</b></span>
+      <span class="hint" id="jobHint">职业点只能填本行，兴趣点除克苏鲁神话外随便填</span>
+    </div>
+    <table class="sk" id="skillTable"></table>
+    <p class="hint" style="margin-top:8px">建卡只负责捏卡。团里用过的技能打勾、掷成长、奖励理智，都在「结算 / 奖励」页做。</p>
+    <div id="growBox" style="margin-top:6px;font-size:13px;line-height:1.7"></div>
+  </div>
+
+  <div class="panel">
+    <h3>背景</h3>
+    <div class="cols2">
+      <label>信念<input id="b_belief" placeholder="你信什么、为什么还撑着"></label>
+      <label>重要的人<input id="b_person" placeholder="写一个名字，KP 会拿他做文章"></label>
+      <label>意义非凡之地<input id="b_place" placeholder="一个具体的地方"></label>
+      <label>宝贵之物<input id="b_item" placeholder="随身那件东西"></label>
+      <label>特质<input id="b_trait" placeholder="一个让人记住你的毛病"></label>
+      <label>外貌描述<input id="b_look"></label>
+    </div>
+    <div style="margin-top:10px"><label>随身物品<textarea id="b_gear" placeholder="钱包、笔记本、手机、车钥匙……"></textarea></label></div>
+    <div style="margin-top:10px"><label>现金 / 资产<input id="i_cash" placeholder="比如 500 块、一支左轮、一块铜怀表"></label></div>
+    <div style="margin-top:10px"><label>经历记录<textarea id="b_log" style="min-height:110px" placeholder="一场一场往下写：哪一天、在哪、赢了什么、丢了什么"></textarea></label></div>
+  </div>
+
+  <div class="panel">
+    <h3>保存与导出</h3>
+    <div class="row">
+      <label>角色卡名字 <input id="cardName" placeholder="比如：陈默·记者" style="width:200px"></label>
+      <button class="btn" onclick="saveCardToLib()">存为角色卡</button>
+      <label>打开另一张 <select id="cardLibSel" onchange="pickCardToEdit()"></select></label>
+      <button class="ghost" onclick="refreshCardLibSel()">刷新</button>
+      <button class="ghost" onclick="loadLocal()">读上次存的</button>
+      <button class="ghost" onclick="exportJPG()">导出 JPG</button>
+      <button class="ghost" onclick="exportCardsJSON()">导出卡片包</button>
+      <button class="ghost" onclick="importCardsJSON()">导入卡片包</button>
+      <button class="ghost" onclick="resetAll()">清空重来</button>
+    </div>
+    <p class="hint">起个名字存起来，结算页就能挑这张卡去掷奖励和成长；同名再存一次是更新同一张。</p>
+  </div>
+</section>
+
+<!-- ============ 结算 / 奖励 ============ -->
+<section id="tab-reward">
+  <div class="panel">
+    <h3>选一张角色卡</h3>
+    <div class="row">
+      <label>角色卡 <select id="rewSel" onchange="renderReward()"></select></label>
+      <button class="ghost" onclick="refreshRewardSel()">刷新列表</button>
+      <button class="ghost" onclick="openInCardTab()">在建卡页打开</button>
+    </div>
+    <div id="rewSummary" class="hint"></div>
+  </div>
+
+  <div class="panel">
+    <h3>奖励理智（模组通关）</h3>
+    <div class="row">
+      <label>骰面 d<input type="number" id="rewDice" value="6" min="2" max="100" style="width:64px"></label>
+      <button class="btn" onclick="rewardSan()">掷一次，加回理智</button>
+      <span class="hint">7 版通关一般奖励 1d6，长战役 1d10；加起来不超过理智上限</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>成长结算</h3>
+    <p class="hint">这一把里成功用过的技能，在下面表里打勾，只勾成功过的。</p>
+    <div id="rewSkillBox"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" onclick="growReward()">对打勾的技能掷成长</button>
+      <button class="ghost" onclick="clearTicksReward()">清空这张卡的勾</button>
+      <button class="ghost" onclick="undoGrowReward()">清掉这张卡的成长</button>
+    </div>
+    <div id="rewOut" style="margin-top:6px;font-size:13px;line-height:1.8"></div>
+  </div>
+</section>
+
+<!-- ============ 局内状态 ============ -->
+<section id="tab-play">
+  <div class="panel">
+    <h3>选一张角色卡</h3>
+    <div class="row">
+      <label>角色卡 <select id="playSel" onchange="renderPlay()"></select></label>
+      <button class="ghost" onclick="refreshPlaySel()">刷新列表</button>
+      <span class="hint" id="playHint"></span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>局内状态（动了就自动存）</h3>
+    <div id="playBox"></div>
+    <p class="hint">掉血掉 SAN 点 −，捡回来点 +；理智上限 = 99 − 克苏鲁神话，不掉进负数，也不会超过上限。</p>
+  </div>
+</section>
+
+</main>
+<script>
+/* ---------------- 基础 ---------------- */
+function d(n){return Math.floor(Math.random()*n)+1}
+function r3d6x5(){return (d(6)+d(6)+d(6))*5}
+function r2d6p6x5(){return (d(6)+d(6)+6)*5}
+function pad2(n){return n<10?'0'+n:''+n}
+function nowStr(){var t=new Date();return pad2(t.getHours())+':'+pad2(t.getMinutes())+':'+pad2(t.getSeconds())}
+
+var logLines=[];
+function addLog(s){
+  logLines.push(nowStr()+'  '+s);
+  var ul=document.getElementById('history');
+  var li=document.createElement('li');
+  li.textContent=logLines[logLines.length-1];
+  ul.insertBefore(li,ul.firstChild);
+  pushRoll(s);
+}
+
+/* ---------------- 骰子桥（把结果递给阿蓝） ---------------- */
+var BRIDGE='http://127.0.0.1:3999';
+var bridgeOk=false, bridgeChecked=false;
+function setBridge(ok){
+  bridgeOk=ok; bridgeChecked=true;
+  var d=document.getElementById('bridgeDot');
+  if(!d)return;
+  d.className='dot '+(ok?'on':'off');
+  d.textContent=ok?'已连上阿蓝':'桥没开';
+}
+function pingBridge(){
+  try{
+    fetch(BRIDGE+'/ping',{method:'GET',mode:'no-cors',cache:'no-store'})
+      .then(function(){setBridge(true)})
+      .catch(function(){setBridge(false)});
+  }catch(e){setBridge(false)}
+}
+function pushRoll(s){
+  if(!bridgeOk){ return }
+  try{
+    fetch(BRIDGE+'/roll',{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},body:s}).catch(function(){setBridge(false)});
+  }catch(e){setBridge(false)}
+}
+document.getElementById('bridgeDot').onclick=pingBridge;
+pingBridge();
+setInterval(function(){ if(!bridgeOk) pingBridge() },8000);
+function copyLog(){
+  if(!logLines.length){alert('还没有记录');return}
+  var txt=logLines.slice().reverse().join('\n');
+  navigator.clipboard.writeText(txt).then(function(){alert('已复制 '+logLines.length+' 条')},function(){alert('复制失败，手动选中吧')});
+}
+function clearLog(){logLines=[];document.getElementById('history').innerHTML=''}
+function exportLog(){
+  if(!logLines.length){alert('还没有记录');return}
+  var t=new Date();
+  var name='coc记录-'+t.getFullYear()+pad2(t.getMonth()+1)+pad2(t.getDate())+'-'+pad2(t.getHours())+pad2(t.getMinutes())+'.txt';
+  var txt='COC 骰子记录  '+t.toLocaleString()+'\n'+logLines.join('\n')+'\n';
+  var b=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download=name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1200);
+}
+
+/* ---------------- 3D 骰子 ---------------- */
+var SFX=true, AC=null, rolling=false, lastTick=0;
+var FACES=['f-front','f-back','f-right','f-left','f-top','f-bottom'];
+var PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+
+function toggleSfx(){SFX=!SFX;document.getElementById('sfxBtn').textContent='音效 '+(SFX?'开':'关')}
+function actx(){
+  try{
+    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume();
+  }catch(e){AC=null}
+  return AC;
+}
+function sTick(){
+  if(!SFX)return; var c=actx(); if(!c)return;
+  var t=c.currentTime, o=c.createOscillator(), g=c.createGain();
+  o.type='triangle'; o.frequency.setValueAtTime(900+Math.random()*700,t);
+  g.gain.setValueAtTime(0.03,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.05);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+0.06);
+}
+function tickThrottled(){var n=performance.now(); if(n-lastTick>78){lastTick=n;sTick()}}
+function sClack(){
+  if(!SFX)return; var c=actx(); if(!c)return; var t=c.currentTime;
+  var len=Math.floor(c.sampleRate*0.13), buf=c.createBuffer(1,len,c.sampleRate), dd=buf.getChannelData(0);
+  for(var i=0;i<len;i++) dd[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2);
+  var src=c.createBufferSource(); src.buffer=buf;
+  var bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=1.1;
+  var g=c.createGain(); g.gain.value=0.5;
+  src.connect(bp); bp.connect(g); g.connect(c.destination); src.start(t);
+  var o=c.createOscillator(), g2=c.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(210,t); o.frequency.exponentialRampToValueAtTime(58,t+0.14);
+  g2.gain.setValueAtTime(0.3,t); g2.gain.exponentialRampToValueAtTime(0.0001,t+0.2);
+  o.connect(g2); g2.connect(c.destination); o.start(t); o.stop(t+0.22);
+}
+function sTone(freqs,dur){
+  if(!SFX)return; var c=actx(); if(!c)return; var t=c.currentTime;
+  freqs.forEach(function(f,i){
+    var o=c.createOscillator(), g=c.createGain(), st=t+i*0.11;
+    o.type='sine'; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,st); g.gain.exponentialRampToValueAtTime(0.15,st+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,st+dur);
+    o.connect(g); g.connect(c.destination); o.start(st); o.stop(st+dur+0.02);
+  });
+}
+function pipsHtml(v){
+  var on=PIPS[v]||[], s='';
+  for(var i=0;i<9;i++) s+='<i class="'+(on.indexOf(i)>=0?'':'off')+'"></i>';
+  return s;
+}
+function buildDice(){
+  ['cb0','cb1'].forEach(function(id){
+    var el=document.getElementById(id);
+    el.innerHTML=FACES.map(function(f){return '<div class="face '+f+'"><span class="lbl">0</span></div>'}).join('');
+  });
+}
+function setCube(el,type,val){
+  var faces=el.children;
+  for(var i=0;i<faces.length;i++){
+    var sp=faces[i].firstChild; if(!sp)continue;
+    if(type==='pip'){ sp.className='pips'; sp.innerHTML=pipsHtml(val) }
+    else {
+      sp.className='lbl'; sp.textContent=String(val);
+      var L=String(val).length;
+      sp.style.fontSize=(L>2?24:(L>1?32:46))+'px';
+    }
+  }
+}
+function randVal(type){
+  if(type==='pip')return 1+Math.floor(Math.random()*6);
+  return Math.floor(Math.random()*10);
+}
+function spinCube(el,type,val,dur,cb){
+  var start=performance.now(), rx=-15, ry=20;
+  el.style.transition='none';
+  function frame(now){
+    var p=(now-start)/dur;
+    if(p<1){
+      var k=1-p;
+      rx+=5+26*k*k; ry+=8+40*k*k;
+      el.style.transform='rotateX('+rx+'deg) rotateY('+ry+'deg)';
+      setCube(el,type,randVal(type)); tickThrottled();
+      requestAnimationFrame(frame);
+    }else{
+      var tx=Math.round((rx+15)/360)*360-15;
+      var ty=Math.round((ry-20)/360)*360+20;
+      el.style.transition='transform .46s cubic-bezier(.18,1.5,.36,1)';
+      el.style.transform='rotateX('+tx+'deg) rotateY('+ty+'deg)';
+      setCube(el,type,val);
+      setTimeout(function(){el.style.transition='none'; if(cb)cb()},470);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+function rollVisual(specs,cb){
+  var left=specs.length;
+  if(!left){if(cb)cb();return}
+  specs.forEach(function(s){
+    spinCube(s.el,s.type,s.val,760,function(){ if(--left===0 && cb) cb() });
+  });
+}
+function rollD100(pick,cb){
+  document.getElementById('cb1').style.display='';
+  rollVisual([
+    {el:document.getElementById('cb0'),type:'num',val:Math.floor(pick/10)%10},
+    {el:document.getElementById('cb1'),type:'num',val:pick%10}
+  ],cb);
+}
+function rollSingle(type,val,cb){
+  document.getElementById('cb1').style.display='none';
+  rollVisual([{el:document.getElementById('cb0'),type:type,val:val}],cb);
+}
+buildDice();
+setCube(document.getElementById('cb0'),'num',0);
+setCube(document.getElementById('cb1'),'num',0);
+document.getElementById('cb1').style.display='none';
+
+/* ---------------- 检定 ---------------- */
+function rankOf(t,skill){
+  if(t<=5)return {k:'大成功',c:'#1f6b4e'};
+  if(t>=96&&skill<50||t===100)return {k:'大失败',c:'#b03030'};
+  if(t<=Math.floor(skill/5))return {k:'极难成功',c:'#1f6b4e'};
+  if(t<=Math.floor(skill/2))return {k:'困难成功',c:'#2f7a56'};
+  if(t<=skill)return {k:'成功',c:'#3a5a4a'};
+  return {k:'失败',c:'#b03030'};
+}
+function doCheck(){
+  if(rolling)return;
+  var skill=parseInt(document.getElementById('checkTarget').value)||0;
+  var bonus=parseInt(document.getElementById('bonus').value)||0;
+  var dice=[d(100)];
+  var extra=Math.abs(bonus);
+  for(var i=0;i<extra;i++)dice.push(d(100));
+  var pick;
+  if(bonus>0)pick=Math.min.apply(null,dice);
+  else if(bonus<0)pick=Math.max.apply(null,dice);
+  else pick=dice[0];
+  var hint=document.getElementById('rankHint');
+  if(hint){
+    var e=Math.max(1,Math.floor(skill/5)), hh=Math.max(1,Math.floor(skill/2));
+    hint.textContent='档位：01–05 大成功｜≤'+e+' 极难成功｜≤'+hh+' 困难成功｜≤'+skill+' 成功｜'+(skill<50?'96–100':'100')+' 大失败';
+  }
+  var r=rankOf(pick,skill);
+  var big=document.getElementById('checkRoll'), v=document.getElementById('checkVerdict');
+  actx(); rolling=true; big.textContent=''; v.textContent=''; v.style.color='';
+  rollD100(pick,function(){
+    rolling=false;
+    big.textContent=pick;
+    v.textContent=r.k+'（目标 '+skill+'）'+(dice.length>1?'  骰：'+dice.join(' / '):'');
+    v.style.color=r.c;
+    addLog('检定 目标'+skill+' → '+pick+' '+r.k+(dice.length>1?' ['+dice.join('/')+']':''));
+    sClack();
+    if(r.k==='大成功')setTimeout(function(){sTone([784,988,1319],0.24)},240);
+    else if(r.k==='大失败')setTimeout(function(){sTone([330,247,175],0.32)},240);
+  });
+}
+function rankVal(k){var m={'大成功':6,'极难成功':5,'困难成功':4,'成功':3,'失败':2,'大失败':1};return m[k]||0}
+function doOpposed(){
+  var a=parseInt(document.getElementById('oppA').value)||0;
+  var b=parseInt(document.getElementById('oppB').value)||0;
+  var ra=d(100), rb=d(100);
+  var ka=rankOf(ra,a), kb=rankOf(rb,b);
+  var va=rankVal(ka.k), vb=rankVal(kb.k);
+  var res, col;
+  if(va>vb){res='我方胜';col='#2f7a56'}
+  else if(vb>va){res='对方胜';col='#b03030'}
+  else if(a>b){res='我方胜（同级，技能高者胜）';col='#2f7a56'}
+  else if(b>a){res='对方胜（同级，技能高者胜）';col='#b03030'}
+  else {res='同级同技，僵持——重掷';col='#7a6a3a'}
+  actx();
+  document.getElementById('oppRoll').textContent=ra+'  vs  '+rb;
+  var v=document.getElementById('oppVerdict');
+  v.textContent=res+'　（我方 '+ka.k+' '+a+'｜对方 '+kb.k+' '+b+'）';
+  v.style.color=col;
+  addLog('对抗 我方'+a+'→'+ra+' '+ka.k+' ｜ 对方'+b+'→'+rb+' '+kb.k+' → '+res);
+  sClack();
+}
+function doSan(){
+  if(rolling)return;
+  var cur=parseInt(document.getElementById('sanCur').value)||0;
+  var w=parseInt(document.getElementById('sanWin').value)||0;
+  var l=parseInt(document.getElementById('sanLose').value)||0;
+  var t=d(100);
+  var ok=t<=cur;
+  var loss=ok?w:l;
+  var left=cur-loss;
+  var big=document.getElementById('sanRoll'), v=document.getElementById('sanVerdict');
+  actx(); rolling=true; big.textContent=''; v.textContent=''; v.style.color='';
+  rollD100(t,function(){
+    rolling=false;
+    big.textContent=t;
+    v.textContent=(ok?'理智检定成功':'理智检定失败')+'　损失 '+loss+'　剩余 '+left+' / '+cur;
+    v.style.color=ok?'#2f7a56':'#b03030';
+    addLog('SAN检定 当前'+cur+' → '+t+(ok?' 成功':' 失败')+' 损'+loss+' 余'+left);
+    sClack();
+    if(!ok)setTimeout(function(){sTone([300,240,170],0.34)},240);
+  });
+}
+function doFree(){
+  if(rolling)return;
+  var n=parseInt(document.getElementById('dn').value)||1;
+  var s=parseInt(document.getElementById('dside').value)||6;
+  var p=parseInt(document.getElementById('dplus').value)||0;
+  var arr=[],sum=0;
+  for(var i=0;i<n;i++){var x=d(s);arr.push(x);sum+=x}
+  var total=sum+p;
+  var big=document.getElementById('freeRoll');
+  actx(); rolling=true; big.textContent='';
+  var asPips=(n===1&&s===6&&p===0);
+  rollSingle(asPips?'pip':'num',total,function(){
+    rolling=false;
+    big.textContent=total;
+    addLog('掷 '+n+'d'+s+(p?'+' + p:'')+' = '+total+'  明细 '+arr.join(','));
+    sClack();
+  });
+}
+
+/* ---------------- 角色卡 ---------------- */
+var ATTRS=[
+  {k:'str',n:'力量 STR',roll:r3d6x5},
+  {k:'con',n:'体质 CON',roll:r3d6x5},
+  {k:'siz',n:'体型 SIZ',roll:r2d6p6x5},
+  {k:'dex',n:'敏捷 DEX',roll:r3d6x5},
+  {k:'app',n:'外貌 APP',roll:r3d6x5},
+  {k:'int',n:'智力 INT',roll:r2d6p6x5},
+  {k:'pow',n:'意志 POW',roll:r3d6x5},
+  {k:'edu',n:'教育 EDU',roll:r2d6p6x5}
+];
+var CATS=['战斗','查线索','人际','学问','零碎'];
+var SKILLS=[
+  ['格斗(斗殴)','战斗',25],['格斗(刀剑)','战斗',20],['格斗(斧)','战斗',15],['格斗(矛)','战斗',20],
+  ['格斗(鞭)','战斗',5],['闪避','战斗','dex2'],['投掷','战斗',20],
+  ['射击(手枪)','战斗',20],['射击(步枪/霰弹)','战斗',25],['射击(弓)','战斗',15],
+  ['侦查','查线索',25],['聆听','查线索',20],['图书馆使用','查线索',20],['心理学','查线索',10],
+  ['追踪','查线索',10],['导航','查线索',10],['开锁','查线索',1],['妙手','查线索',10],
+  ['潜行','查线索',20],['乔装','查线索',5],['估价','查线索',5],['会计','查线索',5],
+  ['话术','人际',5],['魅惑','人际',15],['恐吓','人际',15],['说服','人际',10],
+  ['信用评级','人际',0],['人类学','人际',1],
+  ['母语','学问','edu'],['外语','学问',1],['历史','学问',5],['神秘学','学问',5],['考古学','学问',1],
+  ['医学','学问',1],['急救','学问',30],['科学','学问',1],['法律','学问',5],['精神分析','学问',1],
+  ['博物学','学问',10],['计算机使用','学问',5],['电子学','学问',1],['技艺','学问',5],['克苏鲁神话','学问',0],
+  ['机械维修','零碎',10],['电气维修','零碎',10],['汽车驾驶','零碎',25],['攀爬','零碎',20],
+  ['跳跃','零碎',20],['游泳','零碎',20],['骑术','零碎',5],['操船','零碎',1],['摄影','零碎',5]
+];
+var ATTR_OK={str:[3,18],con:[3,18],siz:[2,12],dex:[3,18],app:[3,18],int:[2,12],pow:[3,18],edu:[2,12]};
+
+/* ---------------- 职业（7 版规则书，照抄主要几项；不确定的以书上那栏为准） ---------------- */
+var JOBS={
+  '自定 / 不设职业':{sk:[],credit:[0,99],pts:'edu4'},
+  '教授':{sk:['图书馆使用','母语','外语','心理学','历史','科学','考古学','技艺'],credit:[20,70],pts:'edu4'},
+  '图书管理员':{sk:['会计','图书馆使用','外语','母语','历史','科学','计算机使用','技艺'],credit:[9,35],pts:'edu4'},
+  '记者':{sk:['母语','技艺','话术','说服','历史','图书馆使用','聆听','心理学'],credit:[9,30],pts:'edu4'},
+  '私家侦探':{sk:['摄影','乔装','法律','图书馆使用','心理学','侦查'],social:['魅惑','话术','恐吓','说服'],free:1,credit:[9,30],pts:'edu2max'},
+  '医生':{sk:['急救','外语','医学','心理学','科学','博物学','说服','技艺'],credit:[30,80],pts:'edu4'},
+  '警察':{sk:['格斗(斗殴)','射击(手枪)','急救','说服','法律','心理学','侦查','汽车驾驶'],credit:[9,30],pts:'edu2dex2'},
+  '古董商':{sk:['估价','技艺','历史','图书馆使用','外语','说服','侦查','会计'],credit:[30,70],pts:'edu4'},
+  '工程师':{sk:['电气维修','机械维修','科学','计算机使用','技艺','侦查','开锁','会计'],credit:[30,60],pts:'edu4'},
+  '士兵':{sk:['攀爬','游泳','闪避','格斗(斗殴)','射击(步枪/霰弹)','潜行','急救','机械维修'],credit:[9,30],pts:'edu2str2'},
+  '神秘学家':{sk:['人类学','历史','图书馆使用','神秘学','外语','科学','说服','技艺'],credit:[9,65],pts:'edu4'},
+  '艺术家':{sk:['技艺','历史','博物学','说服','外语','心理学','侦查','摄影'],credit:[9,30],pts:'edu2dex2'},
+  '罪犯':{sk:['估价','说服','恐吓','潜行','心理学','侦查','妙手','开锁'],credit:[5,65],pts:'edu2dex2'}
+};
+function curJob(){return JOBS[card.job]||JOBS['自定 / 不设职业']}
+function isJobSkill(name){
+  var j=curJob();
+  if(!j.sk.length)return true;
+  if(j.sk.indexOf(name)>=0)return true;
+  if(j.social&&j.social.indexOf(name)>=0)return card.socialChoice===name;
+  if(j.free&&card.freeSkill===name)return true;
+  return false;
+}
+function setFree(name){
+  card.freeSkill=name||'';
+  renderSkills();
+  renderDerived();
+}
+function setSocial(name){
+  card.socialChoice=name||'';
+  /* 换了社交技能，把旧那一项的职业技能点清出来 */
+  var j=curJob();
+  if(j.social) j.social.forEach(function(s){
+    if(s!==card.socialChoice && card.alloc[s]) card.alloc[s].occ=0;
+  });
+  renderSkills();
+  renderDerived();
+}
+function occPoolOf(){
+  var a=card.attrs, j=curJob();
+  var edu=(a.edu||0), dex=(a.dex||0), str=(a.str||0), app=(a.app||0);
+  if(j.pts==='edu2max')return edu*2+Math.max(dex,str)*2;
+  if(j.pts==='edu2dex2')return edu*2+dex*2;
+  if(j.pts==='edu2str2')return edu*2+str*2;
+  if(j.pts==='edu2app2')return edu*2+app*2;
+  return edu*4;
+}
+function setJob(name){
+  card.job=name;
+  if(!curJob().free) card.freeSkill='';
+  if(!curJob().social||curJob().social.indexOf(card.socialChoice)<0) card.socialChoice='';
+  var ij=document.getElementById('i_job');
+  if(ij&&name!=='自定 / 不设职业'){ij.value=name;card.info.job=name;}
+  /* 换了职业，把不再属于本行的职业点清掉，免得悄悄超支 */
+  for(var k in card.alloc){
+    if(card.alloc[k].occ && !isJobSkill(k)) card.alloc[k].occ=0;
+  }
+  renderAll();
+}
+
+var card={attrs:{},luck:0,alloc:{},info:{},job:'自定 / 不设职业',freeSkill:'',socialChoice:'',grow:{},tick:{}};
+
+function baseOfFor(c,sk){
+  var b=sk[2];
+  var at=(c&&c.attrs)||{};
+  if(b==='dex2')return Math.floor((at.dex||0)/2);
+  if(b==='edu')return (at.edu||0);
+  return b;
+}
+function baseOf(sk){return baseOfFor(card,sk)}
+function totalOfFor(c,name){
+  var sk=null;
+  for(var i=0;i<SKILLS.length;i++)if(SKILLS[i][0]===name)sk=SKILLS[i];
+  if(!sk)return 0;
+  var a=(c.alloc&&c.alloc[name])||{occ:0,int:0};
+  var g=(c.grow&&+c.grow[name])||0;
+  return baseOfFor(c,sk)+(+a.occ||0)+(+a.int||0)+g;
+}
+function totalOf(name){return totalOfFor(card,name)}
+
+function rollAll(){
+  ATTRS.forEach(function(a){card.attrs[a.k]=a.roll()});
+  card.luck=r3d6x5();
+  card.alloc={};
+  renderAll();
+}
+function rollOne(k){
+  ATTRS.forEach(function(a){if(a.k===k)card.attrs[k]=a.roll()});
+  renderAll();
+}
+
+function dbOf(){
+  var s=(card.attrs.str||0)+(card.attrs.siz||0);
+  var t=[[64,'-2','-2'],[84,'-1','-1'],[124,'0','0'],[164,'+1d4','1'],[204,'+1d6','2'],
+         [284,'+2d6','3'],[364,'+3d6','4'],[444,'+4d6','5'],[9999,'+5d6','6']];
+  for(var i=0;i<t.length;i++)if(s<=t[i][0])return t[i][1]+' / 体格 '+t[i][2];
+  return '0 / 体格 0';
+}
+function movOf(){
+  var dex=card.attrs.dex||0,str=card.attrs.str||0,siz=card.attrs.siz||0;
+  if(dex<siz&&str<siz)return 7;
+  if(dex>siz&&str>siz)return 9;
+  return 8;
+}
+
+function renderAttrs(){
+  var box=document.getElementById('attrBox');
+  box.innerHTML='';
+  ATTRS.forEach(function(a){
+    var el=document.createElement('div');
+    el.className='attr';
+    el.innerHTML='<div class="n">'+a.n+'</div><div class="v">'+(card.attrs[a.k]||0)+'</div>'+
+      '<button onclick="rollOne(\''+a.k+'\')">重掷</button>';
+    box.appendChild(el);
+  });
+  var el=document.createElement('div');
+  el.className='attr';
+  el.innerHTML='<div class="n">幸运 LUCK</div><div class="v">'+(card.luck||0)+'</div>'+
+    '<button onclick="card.luck=r3d6x5();renderAll()">重掷</button>';
+  box.appendChild(el);
+}
+function renderDerived(){
+  var a=card.attrs;
+  var hp=Math.floor(((a.con||0)+(a.siz||0))/10);
+  var mp=Math.floor((a.pow||0)/5);
+  var sanMaxV=sanMaxOf(card);
+  var san=curOf(card,'san');
+  var dodge=Math.floor((a.dex||0)/2);
+  var occ=occPoolOf(), itr=(a.int||0)*2;
+  var occUsed=0,itrUsed=0;
+  for(var k in card.alloc){occUsed+=(+card.alloc[k].occ||0);itrUsed+=(+card.alloc[k].int||0)}
+  var data=[
+    ['生命 HP',hp],['魔法 MP',mp],['理智 SAN',san+' / '+sanMaxV],['幸运',card.luck||0],
+    ['闪避',dodge],['移动 MOV',movOf()],['伤害加值 / 体格',dbOf()],['年龄',card.info.age||'—']
+  ];
+  var box=document.getElementById('derivedBox');
+  box.innerHTML='';
+  data.forEach(function(x){
+    var el=document.createElement('div');
+    el.className='dbox';
+    el.innerHTML='<div class="n">'+x[0]+'</div><div class="v">'+x[1]+'</div>';
+    box.appendChild(el);
+  });
+  var o=document.getElementById('occLeft'),n=document.getElementById('intLeft');
+  o.textContent=(occ-occUsed);
+  n.textContent=(itr-itrUsed);
+  o.className=(occ-occUsed<0)?'over':'';
+  n.className=(itr-itrUsed<0)?'over':'';
+}
+
+function fillJobSelect(){
+  var s=document.getElementById('jobSel');
+  if(!s)return;
+  var keys=Object.keys(JOBS);
+  if(s.options.length!==keys.length){
+    s.innerHTML='';
+    keys.forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;s.appendChild(o)});
+  }
+  s.value=card.job||'自定 / 不设职业';
+}
+function fillFreeSelect(j){
+  var wrap=document.getElementById('freeWrap'), s=document.getElementById('freeSel');
+  if(!wrap||!s)return;
+  if(!j.free){wrap.style.display='none';return}
+  wrap.style.display='';
+  if(!s.options.length){
+    var none=document.createElement('option');none.value='';none.textContent='（还没选）';s.appendChild(none);
+    SKILLS.forEach(function(sk){var o=document.createElement('option');o.value=sk[0];o.textContent=sk[0];s.appendChild(o)});
+  }
+  s.value=card.freeSkill||'';
+}
+function fillSocialSelect(j){
+  var wrap=document.getElementById('socialWrap'), s=document.getElementById('socialSel');
+  if(!wrap||!s)return;
+  if(!j.social||!j.social.length){wrap.style.display='none';return}
+  wrap.style.display='';
+  if(!s.options.length||s.options.length!==j.social.length+1){
+    s.innerHTML='';
+    var none=document.createElement('option');none.value='';none.textContent='（还没选）';s.appendChild(none);
+    j.social.forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;s.appendChild(o)});
+  }
+  s.value=card.socialChoice||'';
+  if(!card.socialChoice) s.value='';
+}
+function autoPickSocial(){
+  var j=curJob();
+  if(!j.social||!j.social.length||card.socialChoice)return;
+  var best='',bv=0;
+  j.social.forEach(function(s){var a=card.alloc[s];if(a&&(+a.occ||0)>bv){bv=+a.occ;best=s}});
+  if(best){
+    card.socialChoice=best;
+    j.social.forEach(function(s){ if(s!==best && card.alloc[s]) card.alloc[s].occ=0; });
+  }
+}
+function pruneOcc(){
+  /* 非本行的技能不可能有职业技能点，切职业/切社交后把残留清掉 */
+  for(var k in card.alloc){
+    if(card.alloc[k] && card.alloc[k].occ && !isJobSkill(k)) card.alloc[k].occ=0;
+  }
+}
+function renderSkills(){
+  fillJobSelect();
+  var j=curJob();
+  autoPickSocial();
+  pruneOcc();
+  fillFreeSelect(j);
+  fillSocialSelect(j);
+  var hint=document.getElementById('jobHint');
+  if(hint){
+    hint.textContent=j.sk.length
+      ? ('本行：'+j.sk.join('、')+(j.social?('｜社交选一：'+j.social.join('/')):'')+'｜信用评级 '+j.credit[0]+'–'+j.credit[1]+'%，职业点池 '+occPoolOf()+(j.pts==='edu2max'?'（EDU×2＋力量/敏捷取高×2）':''))
+      : '职业点只能填本行，兴趣点除克苏鲁神话外随便填';
+  }
+  var t=document.getElementById('skillTable');
+  t.innerHTML='';
+  var head=document.createElement('tr');
+  head.innerHTML='<th>技能</th><th class="num">起始</th><th class="num">职业点</th><th class="num">兴趣点</th><th class="num">合计</th>';
+  t.appendChild(head);
+  CATS.forEach(function(cat){
+    var tr0=document.createElement('tr');
+    tr0.innerHTML='<td class="cat" colspan="5">'+cat+'</td>';
+    t.appendChild(tr0);
+    SKILLS.forEach(function(sk){
+      if(sk[1]!==cat)return;
+      var name=sk[0];
+      var a=card.alloc[name]||{occ:0,int:0};
+      var mine=isJobSkill(name);
+      var tot=totalOf(name);
+      var g=(card.grow&&+card.grow[name])||0;
+      var ticked=!!(card.tick&&card.tick[name]);
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td>'+name+(mine&&j.sk.length?'<span class="jobtag">本行</span>':'')+'</td>'+
+        '<td class="num">'+baseOf(sk)+'</td>'+
+        '<td class="num"><input type="number" min="0" value="'+(a.occ||0)+'" data-k="'+name+'" data-t="occ"'+(mine?'':' disabled')+'></td>'+
+        '<td class="num"><input type="number" min="0" value="'+(a.int||0)+'" data-k="'+name+'" data-t="int"></td>'+
+        '<td class="tot'+(tot>99?' over':'')+'">'+tot+(g?'<span style="color:#2f7a56;font-size:11px"> +'+g+'</span>':'')+'</td>';
+      t.appendChild(tr);
+    });
+  });
+  t.querySelectorAll('input[type=number]').forEach(function(inp){
+    if(inp.disabled)return;
+    inp.addEventListener('input',function(){
+      var k=inp.getAttribute('data-k'),ty=inp.getAttribute('data-t');
+      var v=parseInt(inp.value)||0;
+      if(v<0)v=0;
+      if(!card.alloc[k])card.alloc[k]={occ:0,int:0};
+      card.alloc[k][ty]=v;
+      var row=inp.closest('tr');
+      var tt=totalOf(k);
+      var el=row.querySelector('.tot');
+      el.textContent=tt;
+      el.className='tot'+(tt>99?' over':'');
+      renderDerived();
+    });
+  });
+}
+
+function saveQuiet(){
+  try{localStorage.setItem('coc-card-v1',JSON.stringify(card))}catch(e){}
+  if(card.info&&card.info.libName){
+    var lib=loadLib();
+    if(lib[card.info.libName]){
+      lib[card.info.libName]=deepCopy(card);
+      saveLib(lib);
+    }
+  }
+}
+function clearTicks(){
+  card.tick={};
+  renderSkills();
+  saveQuiet();
+  var b=document.getElementById('growBox');
+  if(b)b.textContent='勾都清掉了。';
+}
+function growCard(c){
+  var names=[];
+  if(c.tick)for(var k in c.tick) if(c.tick[k]) names.push(k);
+  if(!names.length)return null;
+  var out=[];
+  names.forEach(function(n){
+    var cur=totalOfFor(c,n);
+    var t=d(100);
+    var gain=(t>cur||t===100)?d(10):0;
+    if(gain){ if(!c.grow)c.grow={}; c.grow[n]=(+c.grow[n]||0)+gain; }
+    var now=totalOfFor(c,n);
+    out.push({name:n,roll:t,cur:cur,gain:gain,now:now});
+    addLog('成长 '+n+' 原'+cur+' d100='+t+(gain?' +'+gain+' → '+now:' 不变'));
+  });
+  c.tick={};
+  return out;
+}
+function fmtGrow(out){
+  return out.map(function(o){
+    return o.name+'：d100='+o.roll+(o.gain?' → 涨 '+o.gain+'，现在 '+o.now:' → 不涨（当前 '+o.cur+'）');
+  }).join('<br>');
+}
+function doGrowth(){
+  var out=growCard(card);
+  var box=document.getElementById('growBox');
+  if(!out){ if(box)box.textContent='一个勾都没有——团里成功用过的技能先打个勾再结算。'; return }
+  renderSkills();
+  saveQuiet();
+  if(box)box.innerHTML=fmtGrow(out);
+}
+function bindInfo(){
+  [['i_name','name'],['i_age','age'],['i_sex','sex'],['i_job','job'],['i_home','home'],['i_era','era']].forEach(function(p){
+    var el=document.getElementById(p[0]);
+    el.value=card.info[p[1]]||'';
+    el.addEventListener('input',function(){card.info[p[1]]=el.value});
+  });
+  [['b_belief','belief'],['b_person','person'],['b_place','place'],['b_item','item'],['b_trait','trait'],['b_look','look'],['b_gear','gear'],['i_cash','cash'],['b_log','log']].forEach(function(p){
+    var el=document.getElementById(p[0]);
+    el.value=card.info[p[1]]||'';
+    el.addEventListener('input',function(){card.info[p[1]]=el.value});
+  });
+}
+
+function renderAll(){
+  renderAttrs();renderDerived();renderSkills();bindInfo();
+}
+
+/* ---------------- 角色卡库（本机） ---------------- */
+var LIBKEY='coc-cards-v1';
+function loadLib(){try{return JSON.parse(localStorage.getItem(LIBKEY)||'{}')||{}}catch(e){return{}}}
+function saveLib(o){try{localStorage.setItem(LIBKEY,JSON.stringify(o));return true}catch(e){alert('存不进去：'+e.message);return false}}
+function deepCopy(o){return JSON.parse(JSON.stringify(o))}
+function saveCardToLib(){
+  var n=(document.getElementById('cardName').value||'').trim()||((card.info&&card.info.name)||'').trim();
+  if(!n){alert('先给它起个名字');return}
+  var lib=loadLib();
+  if(lib[n]&&!confirm('已经有一张叫「'+n+'」的了，覆盖成现在这张？'))return;
+  lib[n]=deepCopy(card);
+  if(!saveLib(lib))return;
+  if(!card.info)card.info={};
+  card.info.libName=n;
+  refreshRewardSel(n);
+  refreshCardLibSel(n);
+  alert('存好了：'+n);
+}
+function refreshRewardSel(keep){
+  var sel=document.getElementById('rewSel');
+  if(!sel)return;
+  var names=Object.keys(loadLib()).sort();
+  sel.innerHTML='';
+  if(!names.length){
+    var o=document.createElement('option');o.value='';o.textContent='（还没有存过的角色卡）';sel.appendChild(o);
+  }
+  names.forEach(function(n){
+    var op=document.createElement('option');op.value=n;op.textContent=n;sel.appendChild(op);
+  });
+  if(keep&&names.indexOf(keep)>=0)sel.value=keep;
+  else if(names.length&&!sel.value)sel.value=names[0];
+  renderReward();
+}
+function rewName(){var sel=document.getElementById('rewSel');return sel?sel.value:''}
+function rewCard(){var n=rewName();if(!n)return null;return loadLib()[n]||null}
+function cmOf(c){return totalOfFor(c,'克苏鲁神话')||0}
+function hpMaxOf(c){var at=c.attrs||{};return Math.floor(((at.con||0)+(at.siz||0))/10)}
+function mpMaxOf(c){var at=c.attrs||{};return Math.floor((at.pow||0)/5)}
+function sanMaxOf(c){return Math.max(0,99-cmOf(c))}
+function curOf(c,k){
+  var at=c.attrs||{};
+  if(c.cur&&typeof c.cur[k]==='number')return c.cur[k];
+  if(k==='hp')return hpMaxOf(c);
+  if(k==='mp')return mpMaxOf(c);
+  if(k==='san')return Math.min(sanMaxOf(c),(at.pow||0));
+  if(k==='luck')return (c.luck||0);
+  return 0;
+}
+function sanCurOf(c){return curOf(c,'san')}
+function rewSummaryHtml(c){
+  var list=[];
+  if(c.tick)for(var k in c.tick) if(c.tick[k]) list.push(k+' '+totalOfFor(c,k));
+  var at=c.attrs||{};
+  var nm=(c.info&&c.info.name)?c.info.name:'（没填名字）';
+  var occ=(c.info&&c.info.job)?c.info.job:'';
+  return '<b>'+nm+'</b>'+(occ?'　'+occ:'')+'<br>'+
+    '理智 '+sanCurOf(c)+' / '+sanMaxOf(c)+'　生命 '+Math.floor(((at.con||0)+(at.siz||0))/10)+
+    '　魔法 '+Math.floor((at.pow||0)/5)+'　幸运 '+(c.luck||0)+'<br>'+
+    '打勾待结算：'+(list.length?(list.length+' 项　'+list.join('、')):'还没有');
+}
+function renderReward(){
+  var box=document.getElementById('rewSummary');
+  if(!box)return;
+  var c=rewCard();
+  if(!c){box.textContent='先在「建卡页」捏一张卡、起名字存下来，这里才有得挑。';renderRewSkill(null);return}
+  box.innerHTML=rewSummaryHtml(c);
+  renderRewSkill(c);
+}
+function renderRewSkill(c){
+  var box=document.getElementById('rewSkillBox');
+  if(!box)return;
+  if(!c){box.innerHTML='';return}
+  var h='<table class="sk"><tr><th>技能</th><th class="num">合计</th><th class="num">这把用过</th></tr>';
+  CATS.forEach(function(cat){
+    h+='<tr><td class="cat" colspan="3">'+cat+'</td></tr>';
+    SKILLS.forEach(function(sk){
+      if(sk[1]!==cat)return;
+      var n=sk[0];
+      var tot=totalOfFor(c,n);
+      var g=(c.grow&&+c.grow[n])||0;
+      var on=!!(c.tick&&c.tick[n]);
+      h+='<tr><td>'+n+'</td>'+
+         '<td class="num">'+tot+(g?'<span style="color:#2f7a56;font-size:11px"> +'+g+'</span>':'')+'</td>'+
+         '<td class="num"><input type="checkbox" data-rtick="'+n+'"'+(on?' checked':'')+'></td></tr>';
+    });
+  });
+  h+='</table>';
+  box.innerHTML=h;
+  box.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+    cb.addEventListener('change',function(){
+      var cc=rewCard();
+      if(!cc)return;
+      if(!cc.tick)cc.tick={};
+      cc.tick[cb.getAttribute('data-rtick')]=cb.checked;
+      saveRewardCard(cc);
+      var sb=document.getElementById('rewSummary');
+      if(sb)sb.innerHTML=rewSummaryHtml(cc);
+    });
+  });
+}
+function refreshCardLibSel(keep){
+  var sel=document.getElementById('cardLibSel');
+  if(!sel)return;
+  var names=Object.keys(loadLib()).sort();
+  sel.innerHTML='';
+  var o0=document.createElement('option');
+  o0.value='';o0.textContent=names.length?'（选一张打开）':'（还没有存过的角色卡）';
+  sel.appendChild(o0);
+  names.forEach(function(n){var op=document.createElement('option');op.value=n;op.textContent=n;sel.appendChild(op)});
+  if(keep&&names.indexOf(keep)>=0)sel.value=keep;
+}
+function pickCardToEdit(){
+  var sel=document.getElementById('cardLibSel');
+  var n=sel?sel.value:'';
+  if(!n)return;
+  var c=loadLib()[n];
+  if(!c)return;
+  card=deepCopy(c);
+  if(!card.alloc)card.alloc={};
+  if(!card.info)card.info={};
+  if(!card.grow)card.grow={};
+  if(!card.tick)card.tick={};
+  if(!card.cur)card.cur={};
+  card.info.libName=n;
+  var nm=document.getElementById('cardName');
+  if(nm)nm.value=n;
+  renderAll();
+  saveQuiet();
+}
+function saveRewardCard(c){  var n=rewName();
+  if(!n||!c)return;
+  var lib=loadLib();
+  lib[n]=c;
+  saveLib(lib);
+}
+function rewardSan(){
+  var c=rewCard();
+  if(!c){alert('先选一张存过的角色卡');return}
+  var face=parseInt(document.getElementById('rewDice').value)||6;
+  if(face<2)face=2;
+  var r=d(face);
+  var mx=sanMaxOf(c), cur=sanCurOf(c);
+  var nv=Math.min(mx,cur+r);
+  if(!c.cur)c.cur={};
+  c.cur.san=nv;
+  saveRewardCard(c);
+  addLog('奖励SAN '+rewName()+' d'+face+'='+r+' 理智 '+cur+' → '+nv+'（上限 '+mx+'）');
+  renderReward();
+  var out=document.getElementById('rewOut');
+  if(out)out.innerHTML='理智奖励 d'+face+' = <b>'+r+'</b>，'+cur+' → <b>'+nv+'</b> / '+mx+(nv>=mx?'（到顶了）':'');
+}
+function growReward(){
+  var c=rewCard();
+  if(!c){alert('先选一张存过的角色卡');return}
+  var out=growCard(c);
+  var box=document.getElementById('rewOut');
+  if(!out){if(box)box.textContent='这张卡还没有打勾的技能。';return}
+  saveRewardCard(c);
+  renderReward();
+  if(box)box.innerHTML=fmtGrow(out);
+}
+function undoGrowth(){
+  if(!confirm('把这张卡涨上来的加值都清掉？合计会回到没结算前的值。'))return;
+  card.grow={};
+  renderAll();
+  saveQuiet();
+  var b=document.getElementById('growBox');
+  if(b)b.textContent='成长加值清掉了，合计回到原样。';
+}
+function undoGrowReward(){
+  var c=rewCard();
+  if(!c){alert('先选一张存过的角色卡');return}
+  if(!confirm('把「'+rewName()+'」涨上来的加值都清掉？'))return;
+  c.grow={};
+  saveRewardCard(c);
+  renderReward();
+  var b=document.getElementById('rewOut');
+  if(b)b.textContent='成长加值清掉了，合计回到没结算前的值。';
+}
+function clearTicksReward(){
+  var c=rewCard();
+  if(!c){alert('先选一张存过的角色卡');return}
+  c.tick={};
+  saveRewardCard(c);
+  renderReward();
+  var box=document.getElementById('rewOut');
+  if(box)box.textContent='这张卡的勾清掉了。';
+}
+function openInCardTab(){
+  var n=rewName(), c=rewCard();
+  if(!c){alert('先选一张存过的角色卡');return}
+  card=deepCopy(c);
+  if(!card.alloc)card.alloc={};
+  if(!card.info)card.info={};
+  if(!card.grow)card.grow={};
+  if(!card.tick)card.tick={};
+  if(!card.cur)card.cur={};
+  card.info.libName=n;
+  var nm=document.getElementById('cardName');
+  if(nm)nm.value=n;
+  switchTab('card');
+  renderAll();
+  refreshCardLibSel(n);
+}
+
+/* ---------------- 局内状态 ---------------- */
+function refreshPlaySel(keep){
+  var sel=document.getElementById('playSel');
+  if(!sel)return;
+  var names=Object.keys(loadLib()).sort();
+  sel.innerHTML='';
+  if(!names.length){
+    var o=document.createElement('option');o.value='';o.textContent='（还没有存过的角色卡）';sel.appendChild(o);
+  }
+  names.forEach(function(n){
+    var op=document.createElement('option');op.value=n;op.textContent=n;sel.appendChild(op);
+  });
+  if(keep&&names.indexOf(keep)>=0)sel.value=keep;
+  else if(names.length&&!sel.value)sel.value=names[0];
+  renderPlay();
+}
+function playName(){var s=document.getElementById('playSel');return s?s.value:''}
+function playCard(){var n=playName();if(!n)return null;return loadLib()[n]||null}
+function savePlayCard(c){
+  var n=playName();
+  if(!n||!c)return;
+  var lib=loadLib();
+  lib[n]=c;
+  saveLib(lib);
+}
+function renderPlay(){
+  var box=document.getElementById('playBox');
+  var hint=document.getElementById('playHint');
+  if(!box)return;
+  var c=playCard();
+  if(!c){
+    box.innerHTML='<span class="hint">先在「建卡页」捏一张卡、起名字存下来，这里就会列出来。</span>';
+    if(hint)hint.textContent='';
+    return;
+  }
+  if(hint)hint.textContent='这张卡动了就立刻存进本机';
+  var rows=[['hp','生命 HP',hpMaxOf(c)],['mp','魔法 MP',mpMaxOf(c)],['san','理智 SAN',sanMaxOf(c)],['luck','幸运',99]];
+  var h='<table class="sk"><tr><th>状态</th><th class="num">当前</th><th class="num">上限</th><th class="num">调整</th></tr>';
+  rows.forEach(function(r){
+    var v=curOf(c,r[0]);
+    h+='<tr><td>'+r[1]+'</td>'+
+       '<td class="num" style="font-weight:700;color:#1f6b4e">'+v+'</td>'+
+       '<td class="num" style="color:#7d7566">'+r[2]+'</td>'+
+       '<td class="num" style="width:230px">'+
+         '<button class="ghost" onclick="bump(\''+r[0]+'\',-5)">−5</button> '+
+         '<button class="ghost" onclick="bump(\''+r[0]+'\',-1)">−1</button> '+
+         '<button class="ghost" onclick="bump(\''+r[0]+'\',1)">+1</button> '+
+         '<button class="ghost" onclick="bump(\''+r[0]+'\',5)">+5</button>'+
+       '</td></tr>';
+  });
+  h+='</table><p class="hint" style="margin-top:8px">克苏鲁神话 '+cmOf(c)+' → 理智上限 '+sanMaxOf(c)+'</p>';
+  h+='<div class="row" style="margin-top:8px"><button class="btn" onclick="savePlayNow()">存一下</button><span class="hint" id="playSaved">每次点加号减号都自动存进本机了</span></div>';
+  box.innerHTML=h;
+}
+function savePlayNow(){
+  var c=playCard();
+  if(!c)return;
+  savePlayCard(c);
+  var s=document.getElementById('playSaved');
+  if(s)s.textContent='已保存 '+playName();
+  addLog('局内 '+playName()+' 手动保存');
+}
+function bump(k,delta){
+  var c=playCard();
+  if(!c)return;
+  var v=curOf(c,k)+delta;
+  if(v<0)v=0;
+  var cap=(k==='hp')?hpMaxOf(c):((k==='mp')?mpMaxOf(c):((k==='san')?sanMaxOf(c):99));
+  if(v>cap)v=cap;
+  if(!c.cur)c.cur={};
+  c.cur[k]=v;
+  if(k==='luck')c.luck=v;
+  savePlayCard(c);
+  renderPlay();
+  addLog('局内 '+playName()+' '+k.toUpperCase()+' '+(delta>0?'+':'')+delta+' → '+v);
+}
+
+function saveLocal(){
+  try{localStorage.setItem('coc-card-v1',JSON.stringify(card));alert('存好了')}
+  catch(e){alert('存不进去：'+e.message)}
+}
+function loadLocal(){
+  var s=localStorage.getItem('coc-card-v1');
+  if(!s){alert('之前没存过');return}
+  card=JSON.parse(s);
+  if(!card.alloc)card.alloc={};
+  if(!card.info)card.info={};
+  if(!card.job)card.job='自定 / 不设职业';
+  if(!card.freeSkill)card.freeSkill='';
+  if(!card.socialChoice)card.socialChoice='';
+  if(!card.grow)card.grow={};
+  if(!card.tick)card.tick={};
+  renderAll();
+}
+function resetAll(){
+  if(!confirm('清空整张卡？'))return;
+  card={attrs:{},luck:0,alloc:{},info:{},job:'自定 / 不设职业',freeSkill:'',socialChoice:'',grow:{},tick:{},cur:{}};
+  renderAll();
+}
+
+/* ---------------- 导出 JPG ---------------- */
+function wrap(ctx,text,x,y,maxW,lh){
+  var line='',lines=[];
+  for(var i=0;i<text.length;i++){
+    var t=line+text[i];
+    if(ctx.measureText(t).width>maxW){lines.push(line);line=text[i]}
+    else line=t;
+  }
+  if(line)lines.push(line);
+  lines.forEach(function(l,i){ctx.fillText(l,x,y+i*lh)});
+  return y+lines.length*lh;
+}
+
+function exportJPG(){
+  var W=1240,H=1760;
+  var cv=document.createElement('canvas');
+  cv.width=W;cv.height=H;
+  var c=cv.getContext('2d');
+  c.fillStyle='#f7f4ec';c.fillRect(0,0,W,H);
+  c.strokeStyle='#2b2721';c.lineWidth=6;c.strokeRect(18,18,W-36,H-36);
+  c.fillStyle='#2b2721';
+  c.font='bold 34px "Microsoft YaHei"';
+  c.fillText('调查员角色卡',46,80);
+  c.font='16px "Microsoft YaHei"';
+  c.fillStyle='#7d7566';
+  c.fillText('克苏鲁的呼唤 · 第七版　　'+new Date().toLocaleDateString(),46,110);
+
+  var i=card.info||{};
+  c.fillStyle='#2b2721';c.font='19px "Microsoft YaHei"';
+  var info='姓名：'+(i.name||'—')+'　　年龄：'+(i.age||'—')+'　　性别：'+(i.sex||'—')+
+           '　　职业：'+(i.job||'—')+'　　居住地：'+(i.home||'—');
+  c.fillText(info,46,150);
+
+  c.strokeStyle='#c9c1b0';c.lineWidth=1;
+  c.beginPath();c.moveTo(46,170);c.lineTo(W-46,170);c.stroke();
+
+  // 属性
+  c.font='bold 18px "Microsoft YaHei"';c.fillStyle='#1f6b4e';
+  c.fillText('属性',46,205);
+  c.font='17px "Microsoft YaHei"';c.fillStyle='#2b2721';
+  var ax=46,ay=235;
+  ATTRS.forEach(function(a,idx){
+    var col=idx%4,row=Math.floor(idx/4);
+    c.fillText(a.n.replace(' STR','').replace(' CON','').replace(' SIZ','').replace(' DEX','').replace(' APP','').replace(' INT','').replace(' POW','').replace(' EDU','')+'　'+(card.attrs[a.k]||0),ax+col*290,ay+row*34);
+  });
+  c.fillText('幸运　'+(card.luck||0),ax+0*290,ay+2*34);
+  c.fillText('理智　'+sanCurOf(card)+' / '+sanMaxOf(card),ax+1*290,ay+2*34);
+  var a2=card.attrs;
+  var hpv=Math.floor(((a2.con||0)+(a2.siz||0))/10),mpv=Math.floor((a2.pow||0)/5),dgv=Math.floor((a2.dex||0)/2);
+  c.font='16px "Microsoft YaHei"';c.fillStyle='#1f6b4e';
+  c.fillText('生命 '+hpv+'　魔法 '+mpv+'　闪避 '+dgv+'　移动 '+movOf()+'　伤害加值 '+dbOf(),46,ay+2*34+42);
+
+  var y=ay+3*34+70;
+  c.strokeStyle='#c9c1b0';c.beginPath();c.moveTo(46,y);c.lineTo(W-46,y);c.stroke();
+  y+=34;
+
+  // 技能
+  c.font='bold 18px "Microsoft YaHei"';c.fillStyle='#1f6b4e';
+  c.fillText('技能',46,y);y+=30;
+  c.font='16px "Microsoft YaHei"';c.fillStyle='#2b2721';
+  var must={'母语':1,'信用评级':1,'闪避':1};
+  var shown=SKILLS.filter(function(sk){
+    var a=card.alloc[sk[0]];
+    return must[sk[0]] || (a&&((+a.occ||0)+(+a.int||0))>0);
+  });
+  if(!shown.length)shown=SKILLS.slice(0,24);
+  var colW=(W-92)/2;
+  shown.forEach(function(sk,idx){
+    var col=Math.floor(idx/Math.ceil(shown.length/2));
+    var row=idx%Math.ceil(shown.length/2);
+    var x=46+col*colW;
+    var yy=y+row*26;
+    c.fillText(sk[0],x,yy);
+    c.fillText(String(totalOf(sk[0])),x+colW-70,yy);
+  });
+  y+=Math.ceil(shown.length/2)*26+26;
+
+  c.strokeStyle='#c9c1b0';c.beginPath();c.moveTo(46,y);c.lineTo(W-46,y);c.stroke();
+  y+=34;
+
+  c.font='bold 18px "Microsoft YaHei"';c.fillStyle='#1f6b4e';
+  c.fillText('背景',46,y);y+=30;
+  c.font='16px "Microsoft YaHei"';c.fillStyle='#2b2721';
+  var bg=[['信念',i.belief],['重要的人',i.person],['意义非凡之地',i.place],['宝贵之物',i.item],['特质',i.trait]];
+  bg.forEach(function(b){
+    if(y>H-120)return;
+    c.fillStyle='#7d7566';c.fillText(b[0]+'：',46,y);
+    c.fillStyle='#2b2721';
+    var yy2=wrap(c,b[1]||'—',46+ (b[0].length+1)*16,y,H-140,22);
+    y=Math.max(y+26,yy2+6);
+  });
+  if(i.gear){c.fillStyle='#7d7566';c.fillText('随身物品：',46,y);c.fillStyle='#2b2721';wrap(c,i.gear,46+90,y,H-140,22);}
+
+  cv.toBlob(function(b){
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='角色卡_'+(i.name||'无名')+'_'+new Date().toISOString().slice(0,10)+'.jpg';
+    a.click();
+  },'image/jpeg',0.92);
+}
+
+/* ---------------- tab ---------------- */
+/* ---------------- 主题 ---------------- */
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  var b=document.getElementById('themeBtn');
+  if(b)b.textContent=(t==='dark'?'浅色':'深色');
+  try{localStorage.setItem('coc-theme',t)}catch(e){}
+}
+function toggleTheme(){
+  var cur=document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';
+  applyTheme(cur==='dark'?'light':'dark');
+}
+
+function switchTab(which){
+  ['dice','card','play','reward'].forEach(function(k){
+    var s=document.getElementById('tab-'+k);
+    if(s)s.className=(k===which)?'on':'';
+    var b=document.getElementById('tabBtn'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(b)b.className=(k===which)?'on':'';
+  });
+}
+
+/* ---------------- 卡片包 JSON：电脑 ↔ 手机 ---------------- */
+function exportCardsJSON(){
+  var data={app:'coc-toolkit',ver:1,at:new Date().toISOString(),lib:loadLib(),current:card};
+  var b=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='COC角色卡包_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href)},3000);
+}
+function importCardsJSON(){
+  var inp=document.createElement('input');
+  inp.type='file';inp.accept='.json,application/json';
+  inp.onchange=function(){
+    var f=inp.files&&inp.files[0];
+    if(!f)return;
+    var r=new FileReader();
+    r.onload=function(){
+      var d;
+      try{d=JSON.parse(r.result)}catch(e){alert('这个文件不是 JSON，读不出来');return}
+      var src=(d&&d.lib)?d.lib:null;
+      if(!src&&d&&(d.attrs||d.info))src={'导入的卡':d};
+      if(!src){alert('里面没找到角色卡');return}
+      var lib=loadLib(),n=0;
+      for(var k in src){
+        var nm=k||'导入的卡';
+        if(lib[nm]){var i=2;while(lib[nm+' ('+i+')'])i++;nm=nm+' ('+i+')';}
+        lib[nm]=src[k];
+        if(lib[nm]&&lib[nm].info&&!lib[nm].info.libName)lib[nm].info.libName=nm;
+        n++;
+      }
+      if(saveLib(lib)){
+        refreshRewardSel();refreshCardLibSel();
+        alert('导入了 '+n+' 张卡');
+      }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+/* 离线缓存：挂在 https 或 localhost 上才有用，file:// 打开时静默跳过 */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+
+/* 初始化 */
+(function(){
+  card.attrs={str:50,con:55,siz:60,dex:70,app:45,int:65,pow:50,edu:75};
+  card.luck=55;
+  card.info={job:'大学生',era:'1920s',age:20};
+  renderAll();
+  refreshRewardSel();
+  refreshPlaySel();
+  refreshCardLibSel();
+  applyTheme(document.documentElement.getAttribute('data-theme')||'light');
+})();
+</script>
+</body>
+</html>
