@@ -1522,7 +1522,7 @@ function importCardsJSON(){
 /* 离线缓存：挂在 https 或 localhost 上才有用，file:// 打开时静默跳过 */
 if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(function(){});
   });
 }
 

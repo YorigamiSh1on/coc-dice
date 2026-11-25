@@ -25,6 +25,22 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // 骰子桥之类的外地址不拦
+
+  // 页面本身走「先网络、失败再吃缓存」：改了 index.html 一刷新就能看到，
+  // 断网时照样能打开。图标、manifest 这些走缓存优先。
+  const isDoc = req.mode === 'navigate' ||
+    url.pathname.endsWith('/index.html') || url.pathname.endsWith('/');
+  if (isDoc) {
+    e.respondWith(
+      fetch(req, { cache: 'no-store' }).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put('./index.html', copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(req, { ignoreSearch: true }).then((hit) => {
       if (hit) return hit;
